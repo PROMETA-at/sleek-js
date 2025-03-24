@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    // Set up type checking to use "expected" ES modules and native resolution
+    "target": "es2020",
+    "module": "ESNext",
+
+    "declaration": true,
+    "declarationMap": true,
+
+    // Instruct non-relative imports to start within the `src` directory
+    "baseUrl": "src",
+
+    // Allow modules to `export default`
+    "esModuleInterop": true,
+
+    "lib": ["DOM", "ES2020"],
+
+    "isolatedModules": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts"]
+}
