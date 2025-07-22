@@ -1,7 +1,8 @@
 import TomSelect from 'tom-select'
-import TomSelectStyle from 'tom-select/dist/css/tom-select.bootstrap5.css?url'
 import {snakeToCamel} from "./chartjs-chart.js";
 import {trySafeEval} from "../utils.js";
+
+const tomSelectStyle = new URL('tom-select/dist/css/tom-select.bootstrap5.css', import.meta.url)
 
 class SleekSelect extends HTMLElement {
   static formAssociated = true
@@ -29,7 +30,7 @@ class SleekSelect extends HTMLElement {
 
     const styleLink = document.createElement('link')
     styleLink.setAttribute('rel', 'stylesheet')
-    styleLink.setAttribute('href', TomSelectStyle)
+    styleLink.setAttribute('href', tomSelectStyle.href)
 
     this.#shadow.appendChild(this.#selectElement)
     this.#shadow.appendChild(styleLink)
