@@ -3,6 +3,7 @@
     // Set up type checking to use "expected" ES modules and native resolution
     "target": "es2020",
     "module": "ESNext",
+    "moduleResolution": "nodenext",
 
     "declaration": true,
     "declarationMap": true,

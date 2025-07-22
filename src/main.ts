@@ -1,4 +1,4 @@
-export * from './utils'
+export * from './utils.js'
 
 export function loadCustomElements(
   mapping: CustomElementLoaderMapping,

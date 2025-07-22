@@ -1,6 +1,6 @@
-import { trySafeEval } from '../utils'
+import { trySafeEval } from '../utils.js'
 // @ts-ignore Typescript does not like the .js ending, since it conflicts with explicit module imports
-import { Chart } from 'chart.js/auto'
+import {Chart, ChartTypeRegistry} from 'chart.js/auto'
 // @ts-ignore
 import 'chartjs-adapter-date-fns'
 // @ts-ignore
@@ -44,7 +44,7 @@ export class ChartElement extends HTMLElement {
       }, {})
 
     this.#chart = new Chart(canvas, {
-      type: this.getAttribute('type'),
+      type: this.getAttribute('type') as keyof ChartTypeRegistry,
       data: { datasets: [] },
       options,
     })

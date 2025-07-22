@@ -1,7 +1,7 @@
 import TomSelect from 'tom-select'
 import TomSelectStyle from 'tom-select/dist/css/tom-select.bootstrap5.css?url'
-import {snakeToCamel} from "./chartjs-chart";
-import {trySafeEval} from "../utils";
+import {snakeToCamel} from "./chartjs-chart.js";
+import {trySafeEval} from "../utils.js";
 
 class SleekSelect extends HTMLElement {
   static formAssociated = true
@@ -76,7 +76,7 @@ class SleekSelect extends HTMLElement {
 
 
   #onChange(e) {
-    const selectedOptions = Array.from(this.#selectElement.selectedOptions).map((o) => o.value)
+    const selectedOptions = Array.from(this.#selectElement.selectedOptions).map((o) => (o as HTMLOptionElement).value)
     this.#value = selectedOptions
 
     const formData = new FormData()
