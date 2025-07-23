@@ -6,27 +6,20 @@ const tomSelectStyle = new URL('tom-select/dist/css/tom-select.bootstrap5.css', 
 
 class SleekSelect extends HTMLElement {
   static formAssociated = true
+
   #selectElement
   #shadow
   #internals
-  #value
   #options = {}
   tomSelect
 
-  constructor() {
-    super()
+  connectedCallback() {
     this.#selectElement = document.createElement('select')
     this.#shadow = this.attachShadow({ mode: 'open' })
     this.#internals = this.attachInternals()
-  }
-  connectedCallback() {
-    if (this.hasAttribute('name')) {
-      this.#selectElement.name = this.getAttribute('name')
-    }
 
-    if (this.hasAttribute('multiple')) {
-      this.#selectElement.setAttribute('multiple', '')
-    }
+    if (this.hasAttribute('name'))     this.#selectElement.name = this.getAttribute('name')
+    if (this.hasAttribute('multiple')) this.#selectElement.setAttribute('multiple', '')
 
     const styleLink = document.createElement('link')
     styleLink.setAttribute('rel', 'stylesheet')
@@ -69,33 +62,49 @@ class SleekSelect extends HTMLElement {
       highlight: true
     })
 
-    this.#value = this.#selectElement.value
-    this.#internals.setFormValue(this.#value)
-
+    this.value = this.tomSelect.getValue()
     this.#selectElement.addEventListener('change', (e) => this.#onChange(e))
+    this.dispatchEvent(new CustomEvent('upgrade'))
   }
 
 
   #onChange(e) {
-    const selectedOptions = Array.from(this.#selectElement.selectedOptions).map((o) => (o as HTMLOptionElement).value)
-    this.#value = selectedOptions
-
-    const formData = new FormData()
-    for (const value of selectedOptions) {
-      formData.append(this.#selectElement.name, value)
-    }
-    this.#internals.setFormValue(formData)
+    this.value = Array.from(this.#selectElement.selectedOptions).map((o) => (o as HTMLOptionElement).value) 
+    this.dispatchEvent(new Event('change'))
   }
 
   get value() {
-    return this.#value
+    let v = this.tomSelect.getValue()
+    // We shallow-copy arrays here, because in "multiple"-mode, tom-select actually modifies and returns the *same*
+    // array, even when a new array is set as it's value.
+    if (Array.isArray(v)) v = [...v]
+    return v
   }
 
   set value(val) {
-    this.#value = val
-    this.#selectElement.value = val
-    this.#internals.setFormValue(val)
+    // Silent update here to prevent loops. However, this means that consumers of this component must manually trigger
+    // change events when updating the value from outside.
+    if (!valueEqual(this.value, val)) this.tomSelect.setValue(val, true)
+
+    if (Array.isArray(val)) {
+      const formData = new FormData()
+      for (const value of val) {
+        formData.append(this.#selectElement.name, value)
+      }
+      this.#internals.setFormValue(formData)
+    } else {
+      this.#internals.setFormValue(val)
+    }
   }
+}
+
+function valueEqual(v1, v2) {
+  if (Array.isArray(v1) !== Array.isArray(v2)) return false
+  if (Array.isArray(v1)) {
+    const v2Set = new Set(v2)
+    return v1.length === v2.length && v1.every(e => v2Set.has(e))
+  }
+  return v1 === v2
 }
 
 customElements.define('sleek-select', SleekSelect)
