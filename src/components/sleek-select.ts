@@ -4,6 +4,12 @@ import {trySafeEval} from "../utils.js";
 
 const tomSelectStyle = new URL('tom-select/dist/css/tom-select.bootstrap5.css', import.meta.url)
 
+let globalSheets = null;
+function getGlobalStyleSheets() {
+    if (globalSheets === null) globalSheets = document.querySelectorAll('head > link[rel=stylesheet]')
+    return globalSheets
+}
+
 class SleekSelect extends HTMLElement {
   static formAssociated = true
 
@@ -14,53 +20,46 @@ class SleekSelect extends HTMLElement {
   tomSelect
 
   connectedCallback() {
-    this.#selectElement = document.createElement('select')
+    this.style.display = 'block'
+
+    const control = this.#buildFormControl()
+
     this.#shadow = this.attachShadow({ mode: 'open' })
     this.#internals = this.attachInternals()
-
-    if (this.hasAttribute('name'))     this.#selectElement.name = this.getAttribute('name')
-    if (this.hasAttribute('multiple')) this.#selectElement.setAttribute('multiple', '')
 
     const styleLink = document.createElement('link')
     styleLink.setAttribute('rel', 'stylesheet')
     styleLink.setAttribute('href', tomSelectStyle.href)
 
-    this.#shadow.appendChild(this.#selectElement)
+    this.#shadow.appendChild(control)
     this.#shadow.appendChild(styleLink)
+    getGlobalStyleSheets().forEach(sheet => {
+        this.#shadow.appendChild(sheet.cloneNode());
+    });
 
-    try {
-      this.#options = this.getAttributeNames()
-        .filter((n) =>
-          n === 'options' ||
-          n === 'value-field' ||
-          n === 'label-field' ||
-          n === 'search-field' ||
-          n === 'items' ||
-          n === 'optgroup-field' ||
-          n === 'optgroups'
-        )
-        .reduce((obj, path) => {
-          const parts = path.split('.')
-          const key = parts.pop()
-          const value = this.getAttribute(path)
-          const leaf = parts.reduce((obj, part) => {
-            if (! (part in obj)) obj[part] = {}
-            return obj[part];
-          }, obj)
+    this.#options = this.getAttributeNames()
+      .filter((n) =>
+        !['name', 'multiple'].includes(n)
+      )
+      .reduce((obj, path) => {
+        const parts = path.split('.')
+        const key = parts.pop()
+        const value = this.getAttribute(path)
+        const leaf = parts.reduce((obj, part) => {
+          if (! (part in obj)) obj[part] = {}
+          return obj[part];
+        }, obj)
 
-          leaf[snakeToCamel(key)] = trySafeEval(value)
-          return obj
-        }, {})
-    } catch (error) {
-      console.error('Invalid options JSON:', error)
-      this.#options = {}
-    }
+        leaf[snakeToCamel(key)] = trySafeEval(value)
+        return obj
+      }, {})
 
     this.tomSelect = new TomSelect(this.#selectElement, {
       ...this.#options,
       plugins: ['remove_button', 'clear_button'],
       highlight: true
     })
+    this.#fixBootstrapStyling()
 
     this.value = this.tomSelect.getValue()
     this.#selectElement.addEventListener('change', (e) => this.#onChange(e))
@@ -95,6 +94,36 @@ class SleekSelect extends HTMLElement {
     } else {
       this.#internals.setFormValue(val)
     }
+  }
+
+  #buildFormControl() {
+    const control = document.createElement('div')
+    control.classList.add('form-floating')
+    this.#selectElement = document.createElement('select')
+    control.appendChild(this.#selectElement)
+    const label = document.createElement('label')
+    const labelSlot = document.createElement('slot')
+    labelSlot.setAttribute('name', 'label')
+    labelSlot.innerHTML = this.getAttribute('label')
+    label.appendChild(labelSlot)
+    control.appendChild(label)
+
+    if (this.hasAttribute('name'))     this.#selectElement.name = this.getAttribute('name')
+    if (this.hasAttribute('multiple')) this.#selectElement.setAttribute('multiple', '')
+
+    return control
+  }
+
+  #fixBootstrapStyling() {
+    this.#shadow.querySelector('.ts-wrapper').classList.add('form-control')
+    this.#shadow.querySelector('.ts-wrapper').style = `
+      height: unset;
+      min-height: calc(3.5rem + calc(var(--bs-border-width) * 2));
+    `
+    this.#shadow.querySelector('.ts-control').style = `
+      padding-top: 1.625rem;
+      padding-bottom: 0.625rem;
+    `
   }
 }
 
