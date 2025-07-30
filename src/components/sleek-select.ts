@@ -56,19 +56,24 @@ class SleekSelect extends HTMLElement {
 
     this.tomSelect = new TomSelect(this.#selectElement, {
       ...this.#options,
-      plugins: ['remove_button', 'clear_button'],
+      plugins: ['clear_button']
+        .concat(
+          this.hasAttribute('multiple')
+            ? ['remove_button']
+            : []
+        ),
       highlight: true
     })
     this.#fixBootstrapStyling()
 
     this.value = this.tomSelect.getValue()
-    this.#selectElement.addEventListener('change', (e) => this.#onChange(e))
+    this.tomSelect.on('change', this.#onChange.bind(this))
     this.dispatchEvent(new CustomEvent('upgrade'))
   }
 
 
-  #onChange(e) {
-    this.value = Array.from(this.#selectElement.selectedOptions).map((o) => (o as HTMLOptionElement).value) 
+  #onChange(newValue) {
+    this.value = newValue
     this.dispatchEvent(new Event('change'))
   }
 
@@ -117,6 +122,7 @@ class SleekSelect extends HTMLElement {
   #fixBootstrapStyling() {
     this.#shadow.querySelector('.ts-wrapper').classList.add('form-control')
     this.#shadow.querySelector('.ts-wrapper').style = `
+      --ts-pr-caret: 1rem;
       height: unset;
       min-height: calc(3.5rem + calc(var(--bs-border-width) * 2));
     `
