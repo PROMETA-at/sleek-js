@@ -50,7 +50,14 @@ class SleekSelect extends HTMLElement {
           return obj[part];
         }, obj)
 
-        leaf[snakeToCamel(key)] = trySafeEval(value)
+        // For render.* keys we skip snakeToCamel because TomSelect expects keys like 'no_results' exactly as is.
+        // Converting to camelCase would break functionality, so we keep the original key.
+        if (parts[0] === 'render') {
+          leaf[key] = trySafeEval(value)
+        } else {
+          leaf[snakeToCamel(key)] = trySafeEval(value)
+        }
+
         return obj
       }, {})
 
